@@ -5,19 +5,34 @@ import folium
 from streamlit_folium import folium_static
 from folium.plugins import HeatMap
 
+# File uploader in the sidebar
+st.sidebar.title("Navigation")
+uploaded_file = st.sidebar.file_uploader("Upload your CSV file", type=["csv"])
+
 # Load Data
 @st.cache_data
-def load_data():
+def load_data(upload):
     try:
-        df = pd.read_csv("vehicles.csv")
+        df = pd.read_csv(upload)
         df = df.dropna(subset=["manufacturer", "model", "year", "price", "lat", "long", "cylinders", "fuel", "drive"])
     except Exception as e:
         st.error(f"Error loading data: {e}")
         df = pd.DataFrame()
     return df
 
+# Load the uploaded file or default dataset
+if uploaded_file:
+    df = load_data(uploaded_file)
+    st.sidebar.success("File uploaded successfully!")
+else:
+    try:
+        df = load_data("vehicles.csv")
+        st.sidebar.info("Using default dataset: vehicles.csv")
+    except:
+        st.sidebar.warning("No file uploaded and default file not found.")
+        df = pd.DataFrame()
+
 # Sidebar Navigation
-st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", [
     "Home", 
     "Models by Company",
@@ -26,9 +41,6 @@ page = st.sidebar.radio("Go to", [
     "Manufacturer vs Drive", 
     "Brand-Specific Heatmap"
 ])
-
-# Load data
-df = load_data()
 
 # Pages
 if page == "Home":
@@ -147,4 +159,3 @@ elif page == "Brand-Specific Heatmap":
             st.warning("No data available for this manufacturer.")
     else:
         st.warning("Required columns ('manufacturer', 'lat', 'long') not found in dataset.")
-
